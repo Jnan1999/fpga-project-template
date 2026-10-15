@@ -28,7 +28,8 @@ Xil/
 # 注意：自定义 IP 的 .xci 与打包源需要入库；IP 生成产物不入库
 
 # ===== Vitis 工具产物 =====
-sw/vitis/
+sw/vitis/*
+!sw/vitis/.gitkeep
 *.elf
 *.o
 *.a
