@@ -22,10 +22,10 @@
 | Tcl 脚本 | **UG894** Vivado Tcl Scripting | 工程重建、批处理（本模板脚本的依据） |
 | 版本管理 | **UG994** Vivado Revision Control | 源文件外置、write_project_tcl（本模板铁律 1 的依据） |
 
-## 检索方式（三层，见 meta/decisions/0002）
-1. **amd-doc-search MCP（首选）**：官方文档检索服务，见 `.claude/README.md`
-2. **本地图**：决定"该查哪本哪章"
-3. **提示词规范（兜底）**：见 `CLAUDE.md` 行为总纲第 7 条——引用手册须注明 UG号+章节+版本
+## 检索方式（ADR 0002；MCP 层默认不启用，见 ADR 0007）
+1. **本地图（当前主用）**：决定"该查哪本哪章"
+2. **提示词引用规范（兜底）**：见 `CLAUDE.md` 行为总纲第 7 条——引用手册须注明 UG号+章节+版本；未接 MCP 时凭已知权威写法作答并**标注"待核实"**
+3. **amd-doc-search MCP（备选，⏸️ 默认不启用）**：官方文档检索服务，接入方式见 `.claude/README.md`；为防上下文污染暂不启用，需要时由用户显式开启
 
 ## 放置约定
 官方 PDF 下载后放本目录（git-lfs 管理大文件），命名 `<UG编号>_<名称>_v<版本>.pdf`，如 `UG953_7series_libraries_v2021_1.pdf`。
