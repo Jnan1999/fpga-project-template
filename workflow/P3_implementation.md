@@ -8,15 +8,17 @@
 - 接口冻结 gate 通过：`project.yaml` 中 `P2.status: done`，且 `interfaces` 全部 `frozen: true`
 
 ## 2. Agent 输入（按线）
+> 以下清单为**最低要求**（下界非上界）。
 | 线 | 必读输入 |
 | --- | --- |
-| A RTL 线 | 模块 LLD（`docs/02_module_design/<mod>/`）、`project.yaml` interfaces 表、示例 `hw/rtl/pulse_gen/` 三件套、`CLAUDE.md` 铁律 |
+| A RTL 线 | 模块 LLD（`docs/02_module_design/<mod>/`）、`project.yaml` interfaces 表、示例 `hw/rtl/pulse_gen/` 三件套、`CLAUDE.md` 铁律、**Xilinx 手册地图 `docs/refs/xilinx/`**（涉及时钟/IO/官方 IP 时必读对应 UG/PG 章节） |
 | B Golden Model 线 | 模块 LLD（重点数据通路节：Qm.n/舍入/饱和/延迟）、`host/README.md` 三路比对流程 |
 | C 验证环境线 | `03-02_测试矩阵.md`、`03-01_Vplan`、`hw/verif/README.md`、接口协议（ICD） |
 
 ## 3. Agent 任务
 **A 线 — RTL 实现**（角色 agent：`.claude/agents/rtl-engineer.md`）
 - 按 CLAUDE.md"新增模块 checklist"逐模块生成三件套（core 纯功能 / dft_wrap 内部例化 core / wrap 统一入口）
+- **官方优先**：能用官方 IP（FIFO Generator、AXI DMA…）不手搓；能用 UG901 推断模板或 UG953 原语明确例化，不写"祈祷综合器看懂"的写法；引用手册注明 UG号+章节+版本
 - 接口逐字匹配 interfaces 冻结表；`rtl.f` 登记；`project.yaml` 模块 status 改 coding
 
 **B 线 — Golden Model**（角色 agent：`.claude/agents/golden-modeler.md`）

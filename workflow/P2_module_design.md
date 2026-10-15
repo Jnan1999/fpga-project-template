@@ -7,6 +7,7 @@
 - G2 通过：`project.yaml` 中 `P1.status: done`
 
 ## 2. Agent 输入（必读，按模块）
+> 以下清单为**最低要求**（下界非上界）。
 | 输入 | 路径 |
 | --- | --- |
 | 该模块在 HLD 中的划分条目 | `docs/01_architecture/01-01_HLD.md` §4 |

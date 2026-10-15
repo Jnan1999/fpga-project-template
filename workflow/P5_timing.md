@@ -7,9 +7,11 @@
 - `project.yaml` 中 `P4.status: done`（功能验证完成，RTL 功能冻结）
 
 ## 2. Agent 输入（必读）
+> 以下清单为**最低要求**（下界非上界）。
 | 输入 | 路径 |
 | --- | --- |
 | 时钟树/CDC 清单 | `docs/01_architecture/01-04_时钟与复位架构.md` |
+| Xilinx 手册地图（UG949/UG1292/UG906） | `docs/refs/xilinx/README.md` |
 | 约束策略模板 | `docs/04_implementation/04-01_时序约束策略.md` |
 | 现有约束 | `hw/constraints/*.xdc` |
 | 资源预算 | `docs/01_architecture/01-01_HLD.md` §9 |

@@ -12,6 +12,12 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 3. 目标模块 LLD：`docs/02_module_design/<mod>/LLD_<mod>.md`
 4. 标准写法参考：`hw/rtl/pulse_gen/` 三件套
 
+## 官方优先原则（ADR 0002）
+- **能用官方 IP 不手搓**：FIFO Generator / AXI DMA / Clocking Wizard 等，用前读对应 PG 手册
+- **原语/推断模板照手册写**：涉及时钟（UG472）、SelectIO（UG471）、原语（UG953）时，照 UG901 推断模板或 UG953 例化，不写"祈祷综合器看懂"的写法
+- **引用必注明出处**：手册内容引用须写 UG 编号 + 章节 + 文档版本（对应 Vivado 2021.1）；禁止凭记忆编造端口/参数/时序数值
+- 手册地图：`docs/refs/xilinx/README.md`；检索用 amd-doc-search MCP（见 `.claude/README.md`）
+
 ## 硬性规范
 - **三件套结构**：
   - core（`rtl/<mod>.v`）：纯功能，禁止 dbg_ 端口、禁止任何调试/观测代码

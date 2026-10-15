@@ -20,6 +20,8 @@
 3. 任何阶段完工前：必须跑该阶段 playbook 的"验证命令"，并向用户出示结果（PASS/FAIL + 关键数值）
 4. 接口冻结表 `interfaces` 中 `frozen: true` 的接口禁止改动；新增/修改接口必须走 P1/P2 流程并登记
 5. 拿不准的设计决策：列出选项 + 推荐理由，问用户，不自行裁决
+6. **必读清单是下界不是上界**：playbook §2 列的是最低保障；发现清单外相关资料（datasheet 其他章节、Xilinx 手册、相邻模块代码）必须主动阅读，并在汇报中注明额外读了什么（ADR 0001）
+7. **Xilinx 手册引用规范**：引用官方手册内容必须注明 UG 编号 + 章节 + 文档版本（如 "UG953 v2021.1"）；版本须对应 `project.yaml` 的 Vivado 版本（2021.1）；禁止凭记忆编造端口/参数/时序数值（ADR 0002）
 
 ## 关键路径速查
 | 内容 | 路径 |
@@ -36,6 +38,7 @@
 | 测试矩阵 | `docs/03_verification/03-02_测试矩阵.md` |
 | 需求跟踪矩阵 | `docs/00_project/00-03_需求跟踪矩阵_RTM.md` |
 | 参考资料（datasheet 等） | `docs/refs/` |
+| Xilinx 手册地图 | `docs/refs/xilinx/README.md` |
 | Golden Model | `host/golden_model/` |
 | 构建/仿真日志 | `logs/`（末尾 `=== SUMMARY ===` 段为机读摘要） |
 | 示例模块（标准写法参考） | `hw/rtl/pulse_gen/` |

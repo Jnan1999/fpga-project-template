@@ -7,6 +7,7 @@
 - G3 通过：`project.yaml` 中 `P3.status: done`
 
 ## 2. Agent 输入（必读）
+> 以下清单为**最低要求**（下界非上界）。
 | 输入 | 路径 |
 | --- | --- |
 | 本阶段总规程 + 角色定义 | 本文件 + `.claude/agents/verification-lead.md` |
