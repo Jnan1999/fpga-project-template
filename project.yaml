@@ -1,0 +1,68 @@
+# =============================================================================
+# project.yaml —— 项目单一事实来源（机器可读）
+#
+# 消费者：
+#   1) 项目初始化工具：生成新项目时替换 <...> 占位符、并提示用户填写一区
+#   2) Agent：每次对话开头读本文件获取项目上下文（配合 CLAUDE.md）
+#   3) scripts/check_gate.py（第二批）：阶段契约检查的数据源
+#
+# 所有权：
+#   一区（project:）—— 用户初始化时填写，整个开发流程几乎不变，Agent 只读
+#   二区（其余）  —— Agent 随流程维护，gate 相关更新需用户确认
+# =============================================================================
+
+# ========== 一区：项目基础信息（用户填写，Agent 只读，几乎不变）==========
+project:
+  name: "<PROJECT_NAME>"            # 项目名
+  part: "xc7z020clg400-1"           # FPGA 器件型号
+  board: "<BOARD_NAME>"             # 开发板 / 硬件平台
+  top_module: "top"                 # 系统顶层模块名
+  tool_version:
+    vivado: "2021.1"
+    vitis: "2021.1"
+    python: "3.8"
+
+# ========== 二区：流程状态（Agent 维护，gate 更新需用户确认）==========
+
+# 当前阶段：P0 需求捕获 / P1 系统架构 / P2 模块设计 / P3 并行实现 / P4 功能验证 / P5 时序收敛 / P6 集成上板
+current_phase: P0
+
+# 阶段状态：pending | in_progress | gate_review | done
+phases:
+  P0: { status: in_progress, gate: "G1 spec review",          doc: "docs/00_project/" }
+  P1: { status: pending,     gate: "G2 architecture review",  doc: "docs/01_architecture/" }
+  P2: { status: pending,     gate: "LLD + 接口冻结",          doc: "docs/02_module_design/" }
+  P3: { status: pending,     gate: "G3 pre-commitment review", doc: "hw/rtl/ + host/golden_model/ + hw/verif/" }
+  P4: { status: pending,     gate: "覆盖率 + 全回归 + RTM 回填", doc: "docs/03_verification/" }
+  P5: { status: pending,     gate: "WNS>=0 + DRC 干净",       doc: "docs/04_implementation/" }
+  P6: { status: pending,     gate: "G4 release review",       doc: "docs/05_bringup/ + docs/07_release/" }
+
+# 模块注册表（新增模块时登记；status: example | design | coding | verified | timed | onboard）
+modules:
+  pulse_gen:
+    status: example
+    rtl: "hw/rtl/pulse_gen/"
+    tb: "hw/verif/tb/pulse_gen/"
+    lld: ""                          # 模板示例模块无 LLD；正式模块必填
+    note: "模板自带示例模块，新项目可删除"
+
+# 接口冻结表（P1 登记、P2 全部冻结；frozen: true 后禁止改动，改动须走变更流程并用户确认）
+interfaces: []
+#  - name: "axis_adc_data"
+#    from: "adc_frontend"
+#    to: "signal_processing"
+#    protocol: "AXI-Stream"
+#    width: 16
+#    clock: "adc_clk -> proc_clk（异步 FIFO 跨域）"
+#    icd_section: "01-02 §5"
+#    frozen: false
+
+# 寄存器映射指针（P1 定义基地址；驱动头文件第四批由寄存器表自动生成）
+registers:
+  base: "0x43C0_0000"
+  spec: "docs/01_architecture/01-03_寄存器映射规格.md"
+  driver_header: "sw/drivers/regs.h"
+
+# 需求追溯（P0 建立；P4 回填验证状态）
+rtm: "docs/00_project/00-03_需求跟踪矩阵_RTM.md"
+test_matrix: "docs/03_verification/03-02_测试矩阵.md"

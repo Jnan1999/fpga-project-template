@@ -1,0 +1,71 @@
+# ===== Vivado 工程产物（由脚本可复现，不入库，仅保留说明文件）=====
+# 工程只有两个：impl_proj（实现）与 sim_proj（仿真），均由脚本重建；
+# 若换用其他工具链，只需保留 hw/rtl 源码重新建工程，无需提交任何工程目录。
+hw/impl_proj/*
+!hw/impl_proj/README.md
+hw/sim_proj/*
+!hw/sim_proj/README.md
+*.jou
+*.log
+*.bak
+*.str
+*.dbg
+*.pb
+*.rpx
+*.dcp
+*.bit
+*.bin
+*.mmi
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.gen/
+*.sim/
+*.Xil/
+.hbs/
+Xil/
+# 注意：自定义 IP 的 .xci 与打包源需要入库；IP 生成产物不入库
+
+# ===== Vitis 工具产物 =====
+sw/vitis/
+*.elf
+*.o
+*.a
+.metadata/
+*.launch/
+RemoteSystemsTempFiles/
+
+# ===== 仿真产物（验证代码 hw/verif 入库，编译产物与波形忽略）=====
+hw/verif/work/
+hw/verif/waves/*.wdb
+hw/verif/waves/*.wcfg
+hw/verif/report/*.log
+hw/verif/report/*.jou
+xsim.dir/
+xelab.*
+xvlog.*
+xsim.*
+webtalk*
+
+# ===== 大数据集（用 git-lfs 或外部存储）=====
+host/data/*.csv
+host/data/*.bin
+host/data/*.dat
+!host/data/**/.gitkeep
+
+# ===== 发布产物与日志（按需单独归档，不进主分支）=====
+releases/*.BOOT.BIN
+releases/*.bit
+logs/*/
+!logs/.gitkeep
+
+# ===== 编辑器/系统 =====
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
+__pycache__/
+*.pyc
+.venv/

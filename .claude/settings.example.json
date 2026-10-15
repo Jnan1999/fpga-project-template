@@ -1,0 +1,13 @@
+{
+  "_comment": "示例配置：预批准本项目的只读检查与构建命令，减少重复授权提示。确认后重命名为 settings.json 生效（settings.json 可按项目需要裁剪）。",
+  "permissions": {
+    "allow": [
+      "Bash(python scripts/check_ports.py:*)",
+      "Bash(python scripts/check_gate.py:*)",
+      "Bash(python host/golden_model/*:*)",
+      "Bash(python host/scripts/*:*)",
+      "Bash(vivado -mode batch:*)",
+      "Bash(make:*)"
+    ]
+  }
+}
