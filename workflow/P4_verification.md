@@ -12,7 +12,7 @@
 | --- | --- |
 | 本阶段总规程 + 角色定义 | 本文件 + `.claude/agents/verification-lead.md` |
 | 用例清单 | `docs/03_verification/03-02_测试矩阵.md` |
-| 验证点与覆盖率目标 | `docs/03_verification/03-01_Vplan.md` |
+| 验证点与覆盖率目标 | `docs/03_verification/03-01_验证计划_Vplan.md` |
 | 比对基准 | `host/golden_model/` |
 | 日志（失败分析起点） | `logs/sim_<mod>_*.log` 末尾 `=== SUMMARY ===` 段 |
 | 缺陷记录 | `docs/05_bringup/05-03_调试记录.md` |

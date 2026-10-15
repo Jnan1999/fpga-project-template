@@ -17,6 +17,8 @@ project:
   part: "xc7z020clg400-1"           # FPGA 器件型号
   board: "<BOARD_NAME>"             # 开发板 / 硬件平台
   top_module: "top"                 # 系统顶层模块名
+  template_version: "0.1.0"         # 来源模板骨架的版本（ADR 0015：与硬件设计版本、契约版本分开）
+  contract_version: "0.1.0"         # 契约结构版本（contracts/ 演进时递增）
   tool_version:
     vivado: "2021.1"
     vitis: "2021.1"
@@ -37,10 +39,13 @@ phases:
   P5: { status: pending,     gate: "WNS>=0 + DRC 干净",       doc: "docs/04_implementation/" }
   P6: { status: pending,     gate: "G4 release review",       doc: "docs/05_bringup/ + docs/07_release/" }
 
-# 模块注册表（新增模块时登记；status: example | design | coding | verified | timed | onboard）
+# 模块注册表（新增模块时登记）
+#   status: example | design | coding | verified | timed | onboard | stale | blocked
+#   dft_mode: three_piece（业务模块默认）| ip（官方IP）| primitive（官方原语）| none（common同步器/简单组合）
 modules:
   pulse_gen:
     status: example
+    dft_mode: three_piece
     rtl: "hw/rtl/pulse_gen/"
     tb: "hw/verif/tb/pulse_gen/"
     lld: ""                          # 模板示例模块无 LLD；正式模块必填

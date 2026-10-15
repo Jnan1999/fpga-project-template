@@ -1,7 +1,11 @@
-# P5 时序收敛（Timing Closure）
+# P5 时序收敛（Timing Closure / 最终签核）
 
-> 阶段目标：约束先行 → 基线化实现 → 迭代收敛，直至 post-route WNS ≥ 0 且资源达标。
+> 阶段目标：最终时序签核——约束完整、基线化实现、迭代收敛，直至 post-route Setup/Hold/PulseWidth 全绿且资源达标。
 > 方法依据：UG949（UltraFast 方法论）+ UG1292（时序收敛）。**不要指望实现阶段救烂 RTL**。
+>
+> ⚠️ **时序活动不止在 P5**（评审#4b）：时序是贯穿的，P5 只做**最终签核**——
+> P1/P2 建立时钟/CDC/I-O 预算；P3 起每次综合即做早期时序检查（post-synth WNS）；
+> P4 期间持续监控；**不要等功能验证全部结束才第一次发现架构无法满足时序**。
 
 ## 1. 入口条件
 - `project.yaml` 中 `P4.status: done`（功能验证完成，RTL 功能冻结）
@@ -32,11 +36,16 @@
 ## 4. 验证命令
 | 命令（Vivado Tcl，工程内） | 机读判据 |
 | --- | --- |
-| `check_timing` | 无 unconstrained 项 |
-| `report_timing_summary`（post-route） | WNS ≥ 0 且 TNS = 0 |
-| `report_methodology` / `report_drc` | 无 critical warning |
+| `check_timing` | 无 unconstrained 项（时钟/输入输出/生成时钟全约束） |
+| `report_timing_summary`（post-route） | **Setup：WNS ≥ 0 且 TNS = 0；Hold：WHS ≥ 0 且 THS = 0；Pulse Width：WPWS ≥ 0 且 TPWS = 0**（三类齐全，与 04-02 报告模板一致，评审#4） |
+| `report_methodology` / `report_drc` | 无 critical warning（或有用户书面豁免） |
 | `report_utilization` | 各类资源 < HLD §9 预算 |
 | `report_clock_interaction` | CDC 路径全部有约束覆盖 |
+| CDC 结构检查（`report_cdc`，或 Vivado 版本的等价 DRC） | 无未同步/不安全 CDC 结构 |
+
+> ⚠️ **约束豁免 ≠ CDC 安全**：`set_false_path` / `set_clock_groups` 让路径不再参与时序分析，
+> 不等于该跨域路径安全。每条豁免必须：①写明理由进 04-01；②有对应的 CDC 结构（同步器/异步 FIFO/握手）佐证；
+> ③逐条经用户评审。时序例外的作用范围必须最小化（禁用过宽的 `set_clock_groups -asynchronous` 一刀切）。
 
 ## 5. 出口标准
 - 上表判据全绿；用户确认收敛方案与报告

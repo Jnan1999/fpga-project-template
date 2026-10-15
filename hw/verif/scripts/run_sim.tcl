@@ -12,15 +12,18 @@
 #   vlog -f hw/verif/filelists/verif.f   （VCS 用 vlogan，按工具语法调整）
 # =============================================================================
 
-# ---- 1. 读取 filelist（支持 # 注释与 -f 嵌套）----
+# ---- 1. 读取 filelist（支持 # 注释、行尾 # 注释与 -f 嵌套）----
 #   skip_includes=1 时跳过所有 -f 行（用于 sim_1：设计源已在 sources_1 单独加入，
 #   避免把 verif.f 里的 -f rtl.f 重复塞进 sim_1）。
+#   注意：行尾 # 注释会被剥离，否则会被当作文件路径的一部分（ADR 0013 / 评审#5）。
 proc read_filelist {flist {skip_includes 0}} {
     set files {}
     set fh [open $flist r]
     while {[gets $fh line] >= 0} {
+        set hash [string first "#" $line]
+        if {$hash >= 0} { set line [string range $line 0 [expr {$hash - 1}]] }
         set line [string trim $line]
-        if {$line eq "" || [string index $line 0] eq "#"} { continue }
+        if {$line eq ""} { continue }
         if {[string match {-f *} $line]} {
             if {$skip_includes} { continue }
             set sub [string trim [string range $line 2 end]]

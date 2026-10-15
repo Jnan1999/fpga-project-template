@@ -1,7 +1,10 @@
 # hw/rtl —— 可综合设计源（Design RTL，只读可信源）
 
 > 本目录只放**可综合**的硬件设计代码，是实现工程和仿真工程共同引用的唯一来源。
-> **禁止**在本目录放 testbench、SystemVerilog class、interface、断言 bind、$dump 等仿真内容——这些一律放 `hw/verif/`。
+> **禁止**在本目录放 testbench、断言 bind、$dump 等纯仿真内容——这些一律放 `hw/verif/`。
+> 说明（评审#9）："SV interface/class/initial 不可综合"是**本项目的风格限制**，非普遍语言事实——
+> SystemVerilog 有可综合子集。本项目为清晰与保险，规定可综合代码只用 Verilog/SV 可综合子集，
+> interface/class/UVM/initial-for-sim 等验证构造一律归 `hw/verif/`。
 
 ## 1. 模块目录规范：按模块（per-module）组织 + 三件套
 
@@ -22,6 +25,12 @@
 1. **`pulse_gen.v`（core）**：纯功能，禁止 dbg_ 端口和调试逻辑；功能只存在这一份。
 2. **`pulse_gen_dft.v`（dft_wrap）**：**内部例化 core**，功能端口逐字透传；观测/注入全部走 `dbg_` 前缀的独立调试总线（`dbg_force_pulse`/`dbg_block_en`/`dbg_pulse_cnt` 等）。
 3. **`pulse_gen_wrap.v`（wrap）**：top 唯一例化对象；`generate if(ENABLE_DFT)` 在内部分别例化 dft 或 core，`ENABLE_DFT=0` 时调试输出 tie off、DFT 整体不综合（零开销）。
+
+> ⚠️ **精确的保证（评审#7b）**：不能说"DFT 内部例化 core 所以功能不可能漂移"——dft 本就**故意**在边界注入故障（如示例门控 `cfg_en`、强制 `pulse_out`）。正确保证是：
+> - **注入关闭（dbg_force_pulse=0、dbg_block_en=0）时**，dft 的功能行为与 core 满足规定等价关系；
+> - **注入开启时**，行为符合明确的故障模型；
+> - **`ENABLE_DFT=0`（发布配置）时**，注入逻辑确实不存在/不可启用，零开销；
+> - 两种配置都应分别验证，而不仅是核对端口表。
 
 ### 1.2 为什么不顶层平铺成 rtl/ 和 dft/ 两个大目录
 - **官方/业界按 IP（模块）组织，不按文件类型平铺**：AMD/Xilinx IP 仓库规范为 `<company>/<IP名_版本>/` 一个自包含目录；Xilinx IP Packager 的 file group、CERN 的 Vivado CI 框架 Hog 也要求每个 IP 放同名子目录。

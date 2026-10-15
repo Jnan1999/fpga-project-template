@@ -22,9 +22,11 @@ hw/rtl/common/cdc_2ff_sync.v
 hw/rtl/common/async_fifo.v
 
 # --- 示例模块：pulse_gen（core/dft/wrap 三件套，新建模块时照此模板复制）---
-hw/rtl/pulse_gen/rtl/pulse_gen.v                      # 功能核心（唯一可信源）
-hw/rtl/pulse_gen/dft_wrap/pulse_gen_dft.v             # 可测性包装（内部例化核心）
-hw/rtl/pulse_gen/pulse_gen_wrap.v                     # 顶层统一入口（ENABLE_DFT 二选一）
+#   功能核心（唯一可信源）/ 可测性包装（内部例化核心）/ 顶层统一入口（ENABLE_DFT 二选一）
+#   注意：清单条目禁止行尾注释——注释须单独成行，否则会被当作路径一部分（ADR 0013）。
+hw/rtl/pulse_gen/rtl/pulse_gen.v
+hw/rtl/pulse_gen/dft_wrap/pulse_gen_dft.v
+hw/rtl/pulse_gen/pulse_gen_wrap.v
 
 # --- 新增模块在此处按三件套追加（示例：your_module）---
 # hw/rtl/your_module/rtl/your_module.v

@@ -30,7 +30,12 @@ def strip_comments(text: str) -> str:
 
 
 def extract_ports(path: str):
-    """返回 (模块名, {端口名: (方向, 位宽)})。"""
+    """返回 (模块名, {端口名: (方向, 位宽)})。
+
+    处理 ANSI 风格端口声明，包括分组声明 `input wire a, b`（方向前缀只写一次）。
+    解析原则（ADR 0013 / 评审#6）：fail-closed——遇到无法识别的非空声明立即报错，
+    绝不"没识别到就放行"，否则会让错误设计通过门禁。
+    """
     text = strip_comments(Path(path).read_text(encoding="utf-8", errors="ignore"))
     # 匹配 module name #(...) (...) ; （参数列表可缺省）
     m = re.search(
@@ -42,16 +47,33 @@ def extract_ports(path: str):
         raise ValueError(f"无法在 {path} 中解析 module 端口列表")
     name, body = m.group(1), m.group(2)
 
+    decl_re = re.compile(
+        r"^(input|output|inout)\b\s*(?:wire|reg|logic|signed|unsigned)*\s*(\[[^\]]*\])?\s*(\w+)$"
+    )
+    bare_re = re.compile(r"^(\w+)$")  # 分组声明里承袭上一方向的裸名，如 `input wire a, b` 的 b
+
     ports = {}
-    for decl in body.split(","):
-        decl = decl.strip()
-        # input/output/inout [wire/reg] [位宽] 名字
-        dm = re.search(
-            r"\b(input|output|inout)\b\s*(?:wire|reg|logic)?\s*(\[[^\]]*\])?\s*(\w+)",
-            decl,
-        )
+    last_dir = ""
+    last_width = ""
+    for raw in body.split(","):
+        decl = raw.strip()
+        if not decl:
+            continue
+        dm = decl_re.match(decl)
         if dm:
-            ports[dm.group(3)] = (dm.group(1), dm.group(2) or "")
+            last_dir, last_width = dm.group(1), (dm.group(2) or "")
+            ports[dm.group(3)] = (last_dir, last_width)
+            continue
+        bm = bare_re.match(decl)
+        if bm and last_dir:
+            # 分组声明：承袭上一个方向与位宽
+            ports[bm.group(1)] = (last_dir, last_width)
+            continue
+        # fail-closed：非空但无法识别的声明（宏/类型/复杂表达式）→ 拒绝，不放行
+        raise ValueError(
+            f"{path}: 无法识别的端口声明片段 {decl!r}。"
+            f"本门禁只支持标准 ANSI 声明；含宏/复杂类型的端口请改写为标准声明后再校验。"
+        )
     return name, ports
 
 

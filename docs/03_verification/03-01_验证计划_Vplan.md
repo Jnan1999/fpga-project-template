@@ -22,8 +22,8 @@
 ## 3. 验证环境
 - 工具：Vivado xsim / （其他）；SystemVerilog 支持
 - 平台分层（5 层）：interface → driver/monitor → generator → scoreboard/coverage → test
-- 目录：hw/sim/{tb,interface,env,stimulus,ref_model,scripts,report}
-- 通用脚本：hw/sim/scripts/run_sim.tcl（编译→仿真→覆盖率→报告）
+- 目录：hw/verif/{tb,sv,stimulus,ref_model,scripts,report}（本模板实际路径，旧称 hw/sim 已废弃）
+- 通用脚本：hw/verif/scripts/run_sim.tcl（编译→仿真→覆盖率→报告）
 
 ## 4. 验证点清单（Verification Features）
 > 按“功能 / 边界 / 协议 / 异常 / 性能”分类，每点给出唯一编号与优先级（P0 必过）。

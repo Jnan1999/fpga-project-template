@@ -10,8 +10,8 @@
 > 以下清单为**最低要求**（下界非上界）。
 | 输入 | 路径 |
 | --- | --- |
-| 该模块在 HLD 中的划分条目 | `docs/01_architecture/01-01_HLD.md` §4 |
-| 该模块相关接口章节 | `docs/01_architecture/01-02_ICD.md` |
+| 该模块在 HLD 中的划分条目 | `docs/01_architecture/01-01_系统架构设计_HLD.md` §4 |
+| 该模块相关接口章节 | `docs/01_architecture/01-02_接口控制文档_ICD.md` |
 | 时钟/CDC 约束 | `docs/01_architecture/01-04_时钟与复位架构.md` |
 | LLD 模板（Agent 先填精简版） | `docs/templates/_模板_LLD_agent精简版.md` |
 | LLD 模板（完整版，审核后补） | `docs/templates/_模板_模块详细设计_LLD.md` |

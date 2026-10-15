@@ -1,0 +1,33 @@
+# =============================================================================
+# interfaces.yaml —— 机器可读接口契约（信号级，权威来源）
+#
+# 与 project.yaml 的关系：project.yaml 是索引+状态，本文件是信号级契约（见 contracts/README.md）。
+# P1 登记、P2 全部冻结（frozen: true + frozen_at + approved_by）。
+# 冻结后改动须走变更流程：解冻 → 改契约+ICD+相关 LLD → 用户确认 → 重新冻结（新版本号）。
+#
+# 模板示例：以下为占位示例结构，正式项目按实际接口填写。
+# =============================================================================
+
+interfaces: []
+#  - name: "axis_adc_data"
+#    interface_version: "1.0"
+#    from: "adc_frontend"
+#    to: "signal_processing"
+#    protocol: "AXI-Stream"
+#    clock: "proc_clk"            # 跨域时在 cdc 字段说明
+#    reset: "proc_rst_n"
+#    ports:
+#      - { name: "tdata",  dir: "out", width_expr: "DATA_WIDTH", clock: "proc_clk" }
+#      - { name: "tvalid", dir: "out", width_expr: "1",          clock: "proc_clk" }
+#      - { name: "tready", dir: "in",  width_expr: "1",          clock: "proc_clk" }
+#      - { name: "tlast",  dir: "out", width_expr: "1",          clock: "proc_clk" }
+#    parameters:
+#      - { name: "DATA_WIDTH", default: 16, range: "8..32" }
+#    handshake: "valid&&ready 同拍传输；valid 置起后数据保持稳定直到 ready"
+#    backpressure: "支持 tready 反压；反压期间 tdata 保持稳定"
+#    exceptions: "fifo_overflow → ERR_FIFO_OVF（锁存，见 01-03）"
+#    cdc: "adc_clk -> proc_clk，异步 FIFO 跨域（见 01-04 清单 #1）"
+#    icd_section: "01-02 §5"
+#    frozen: false
+#    frozen_at: ""                # 冻结时的 git hash
+#    approved_by: ""              # 冻结批准人

@@ -11,8 +11,9 @@
 ## 四条铁律（不可违反）
 1. **源文件外置工程**：所有 RTL/约束/BD 保持在工程外；`.xpr` 由脚本重建，不入库、不复制源文件进工程
 2. **设计与验证分离**：可综合代码只放 `hw/rtl/`；TB / SV class / interface / 断言 bind 只放 `hw/verif/`
-3. **模块三件套**：每个模块 = `<mod>.v`（core，纯功能）+ `<mod>_dft.v`（DFT 包装，内部例化 core）+ `<mod>_wrap.v`（统一入口）；top 只例化 `*_wrap`，由 `ENABLE_DFT` 参数切换发布/调试
-4. **端口一致性**：core 与 dft 的功能端口逐字一致（名/方向/位宽），`dbg_` 前缀调试端口豁免；改动端口后必须跑 `scripts/check_ports.py`
+3. **可测性三件套（默认模式，非无条件铁律）**：需观测/故障注入的业务模块 = `<mod>.v`（core）+ `<mod>_dft.v`（内部例化 core）+ `<mod>_wrap.v`（统一入口，`ENABLE_DFT` 切换）。top 只例化 `*_wrap`。
+   **例外**：`common/` 的 CDC/同步器、简单组合逻辑、官方 IP/原语（布局与 CDC 识别敏感）**不强制**三件套；模块在 `project.yaml` 注册表用 `dft_mode` 声明模式（`three_piece`/`ip`/`primitive`/`none`）及理由（ADR 0014）。
+4. **端口一致性**：采用三件套的模块，core 与 dft 的功能端口逐字一致（名/方向/位宽），`dbg_` 前缀调试端口豁免；改动端口后必须跑 `scripts/check_ports.py`
 
 ## Agent 行为总纲
 1. `project.yaml` 一区只读；二区状态更新须对应阶段 gate 经用户确认后才改

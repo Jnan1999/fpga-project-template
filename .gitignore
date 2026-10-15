@@ -70,3 +70,7 @@ desktop.ini
 __pycache__/
 *.pyc
 .venv/
+
+# ===== 本地授权配置（含权限规则，不入库；模板提供 settings.example.json 供重命名启用）=====
+.claude/settings.json
+.claude/settings.local.json

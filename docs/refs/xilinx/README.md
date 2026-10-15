@@ -8,6 +8,12 @@
 - 原语端口/参数、IP 配置界面在版本间有差异
 - 引用任何手册内容必须注明：**UG 编号 + 章节 + 文档版本**（如 "UG953 v2021.1, IDELAYE2 §Port Descriptions"）
 
+## ⚠️ 器件适用性（评审#8）
+本地图主要针对 **7 Series**（UG472/UG471/UG953）。模板 README 声称兼容 Zynq-7000/UltraScale+，但：
+- **UltraScale+** 的原语/时钟/SelectIO 对应 **UG572（Clocking）、UG571（SelectIO）、UG974（Libraries）**，与 7 Series 不同
+- 项目用 UltraScale+ 时，必须查对应 UltraScale 手册，不能套用本表 7 Series 条目
+- 引用任何手册条目前须确认**该手册适用当前器件族**（`project.yaml` 的 part）
+
 ## 手册速查（按任务）
 
 | 任务 | 手册 | 读什么 |
@@ -20,7 +26,7 @@
 | 时序收敛 | **UG949** UltraFast Methodology、**UG1292** Timing Closure | 约束先行、基线化实现、失败路径分析方法（见 workflow/P5） |
 | CDC 设计 | **UG906** CDC Methodology | 跨时钟域的约束与检查 |
 | Tcl 脚本 | **UG894** Vivado Tcl Scripting | 工程重建、批处理（本模板脚本的依据） |
-| 版本管理 | **UG994** Vivado Revision Control | 源文件外置、write_project_tcl（本模板铁律 1 的依据） |
+| BD / IP 子系统版本管理 | **UG994** Designing IP Subsystems Using IP Integrator | 含 BD/IP 子系统的版本控制内容（注：UG994 并非"Revision Control"专册；工程级版本管理另见 UG892/write_project_tcl 文档） |
 
 ## 检索方式（ADR 0002；MCP 层默认不启用，见 ADR 0007）
 1. **本地图（当前主用）**：决定"该查哪本哪章"

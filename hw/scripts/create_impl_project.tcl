@@ -8,14 +8,18 @@
 # 源文件保持在工程外部（不勾选 Copy sources into project），工程可随时删除重建。
 # =============================================================================
 
-# ---- 1. 读取 filelist 的通用过程（支持 # 注释与 -f 嵌套）----
+# ---- 1. 读取 filelist 的通用过程（支持 # 注释、行尾 # 注释与 -f 嵌套）----
 #   skip_includes=1 时跳过 -f 行（实现工程一般用默认 0）。
+#   注意：行尾 # 注释会被剥离，否则会被当作文件路径的一部分（ADR 0013 / 评审#5）。
 proc read_filelist {flist {skip_includes 0}} {
     set files {}
     set fh [open $flist r]
     while {[gets $fh line] >= 0} {
+        # 先剥离行尾注释（# 及其后内容），再去空白
+        set hash [string first "#" $line]
+        if {$hash >= 0} { set line [string range $line 0 [expr {$hash - 1}]] }
         set line [string trim $line]
-        if {$line eq "" || [string index $line 0] eq "#"} { continue }
+        if {$line eq ""} { continue }
         if {[string match {-f *} $line]} {
             if {$skip_includes} { continue }
             set sub [string trim [string range $line 2 end]]
