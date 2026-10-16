@@ -43,3 +43,23 @@
 **自由度分级（后续封装判断依据）**：①顺序禁忌→铁律 ②低频固定→示例脚本不封装 ③复杂方法论→skill（时序收敛/CDC 审查/失败归因/覆盖率收敛/寄存器表生成）④纯创意→只给思路。
 
 关联 ADR：0019（修订 0017）。
+
+---
+
+## 追加（同日）：第二次外部评审驱动——核心原则修正（ADR 0020）
+
+另一模型评审 0016~0019。核心批评：0019 放开"方法自由"正确，但"只认 SUMMARY"作为唯一硬要求过强（agent 可改脚本又只认 SUMMARY → 可能漏测却输出 PASS）。采纳其"方法自由、证据可追溯、验收不可自改"替代"SUMMARY 唯一硬要求"。
+
+**采纳并落地：**
+- CLAUDE.md「工具操作」重写为三原则（方法自由/证据可追溯/验收不可自改）+ 长任务三态
+- ops.yaml → 0.3.0：补 check_ports SUMMARY 段（消除"某脚本可无 SUMMARY"冲突）、统一 run_sim 退出码为 0=PASS（消除"执行成功却退 0 但测试失败"口径冲突）、result_glob 注明"仅浏览，证据 run_id 绑定不回退最新"
+- tcl-ops.md：机读契约段重写（SUMMARY=反馈非证据）+ 证据选择 run_id 绑定 + 长任务三态 + MCP 改"当前取舍"
+- commands/module-check.md：**去自动修复**（检查权限不隐含修复权限，依接口契约定位该修哪侧由用户定）+ 修 `$ARGUMENTS`/`${ARGUMENTS}` 混用 bug
+- commands/new-module.md：按阶段限定产出（P1/P2 只设计、P3 才实现）+ dft_mode 前置 + scaffold 不计已实现（纠正"先 RTL 后 LLD"）
+- ADR 0018 标注"零重写是目标待验证"+ 两边界；ADR 0019 自由度改按风险分级 + MCP 理由收敛
+
+**甄别后拒绝：** 评审的 `-coverage all`（仓库从无此项）、多处行号引用（与实际内容不符，系推测）；`disable-model-invocation`、`/gate` vs `/project:gate`、rules 触发时机三说法无法证实 → 标"待验证"不盲改。
+
+**遗留未关闭项（列入第二批）**：check_ports 正则解析边界；contracts/interfaces.yaml 尚未被工具链消费（接口权威未贯通）。
+
+关联 ADR：0020（修正 0019、部分修订 0018）。

@@ -10,14 +10,14 @@
 # 每条 op 字段：
 #   kind        actuation(执行类) | verification(检查类，gate 证据来源)
 #   entry       示例入口命令（agent 可调整）
-#   long_running  true=综合/实现/大回归级，需后台运行+轮询日志
+#   long_running  true=综合/实现/大回归级，需后台运行+轮询，完成/超时/取消三态
 #   artifacts   产出物位置
-#   result_glob 结果日志定位模式（agent/check_gate 据此找最新一份，不靠猜）
-#   summary     机读段标记与关键字段
-#   exit_code   退出码约定（0=PASS，非0=FAIL，fail-closed）
+#   result_glob 结果日志定位【仅供浏览】；正式证据以 run_id 绑定的具体路径为准，不回退"最新一份"（ADR 0020）
+#   summary     机读段（反馈格式，非信任来源）；gate 证据须另核对运行完成+输入身份+检查范围+原始报告+通过条件
+#   exit_code   统一口径：0=PASS，非0=FAIL（fail-closed）
 # =============================================================================
 
-ops_version: "0.2.0"    # 0.2：重定位为参考清单 + result_glob + long_running（ADR 0019）
+ops_version: "0.3.0"    # 0.3：ADR 0020——SUMMARY 降为反馈格式、退出码统一 0=PASS、证据 run_id 绑定
 
 ops:
 
@@ -46,11 +46,11 @@ ops:
       project: "hw/sim_proj/"
       log: "logs/sim_<mod>_*.log"
       waves: "hw/verif/waves/"
-    result_glob: "logs/sim_*_*.log"
+    result_glob: "logs/sim_*_*.log"        # 仅供浏览；并行/不同种子会串用，证据须 run_id 绑定具体路径
     summary:
       marker: "=== SUMMARY ==="
-      fields: [RESULT, TESTCASES_PASSED, TESTCASES_FAILED, SEED]
-    exit_code: "0=仿真运行完成；非0=编译/解析失败（用例 PASS/FAIL 以 SUMMARY 段为准）"
+      fields: [RESULT, RUN_ID, TESTCASES_PASSED, TESTCASES_FAILED, SEED]
+    exit_code: "0=仿真运行完成且用例全过（RESULT: PASS）；非0=编译失败或有 FAIL（统一 0=PASS 口径；执行成功与验证通过在 SUMMARY 分字段表达，不靠退出码混用）"
 
   # ---- verification 类（gate 证据来源；fail-closed + 自测，ADR 0013）----
 
@@ -63,10 +63,11 @@ ops:
       - { name: core_v, required: true }
       - { name: dft_v, required: true }
     artifacts:
-      log: "stdout（差异逐行输出）"
+      log: "stdout（差异逐行输出 + 末尾 SUMMARY 段）"
     summary:
-      marker: ""                          # 退出码即判据
-    exit_code: "0=一致；非0=不一致或解析失败（fail-closed）"
+      marker: "=== SUMMARY ==="
+      fields: [RESULT, PAIRS_CHECKED, PAIRS_PASSED, PAIRS_FAILED]
+    exit_code: "0=一致（PASS）；非0=不一致或解析失败（fail-closed，统一 0=PASS 口径）"
     capability: "只证明端口名/方向/位宽一致；不能证明参数默认值、信号连接、功能正确（ADR 0010）"
     selftest: "scripts/tests/（第二批落地：含故意不一致的反例）"
 
