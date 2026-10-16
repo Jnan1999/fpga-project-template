@@ -18,6 +18,12 @@
 
 # ======================= 驱动段（agent 可自由改造） =======================
 
+# 环境硬化变量兼容（2026-10-16 实证）：若用户环境设置了
+# NoDefaultCurrentDirectoryInExePath=1（安全基线），cmd 不再搜索当前目录，
+# Vivado launch_simulation 以相对名 spawn 生成的 compile.bat 会立即失败
+# （Spawn failed: Broken pipe）。仅在本进程环境内摘除，不影响用户全局配置。
+unset -nocomplain env(NoDefaultCurrentDirectoryInExePath)
+
 # ---- 1. 读取 filelist（支持 # 注释、行尾 # 注释与 -f 嵌套）----
 #   skip_includes=1 时跳过所有 -f 行（用于 sim_1：设计源已在 sources_1 单独加入，
 #   避免把 verif.f 里的 -f rtl.f 重复塞进 sim_1）。
@@ -69,21 +75,28 @@ set rc [catch {
     # 6. 设置仿真顶层、编译选项（覆盖率、断言）
     set_property top $TEST_TOP [get_filesets sim_1]
     set_property top_lib xil_defaultlib [get_filesets sim_1]
-    set_property -name {xsim.simulate.runtime} -value {0} -objects [get_filesets sim_1]
+    # runtime=all：生成的 xsim tcl 为 `run all`——仿真寿命由 TB 的 $finish 决定。
+    # 禁用 0：会生成 `run 0`（仿真一步不走，TB 从未执行 → 日志无 FAIL → 假 PASS，
+    # fail-open，2026-10-16 实测生成的 tb_pulse_gen.tcl 即为 `run 0`）。
+    set_property -name {xsim.simulate.runtime} -value {all} -objects [get_filesets sim_1]
     set_property -name {xsim.elaborate.debug_level} -value {all} -objects [get_filesets sim_1]
-    # 覆盖率开关。【待核实】：`-coverage all` 语法继承自模板初版，须对照
-    # UG900（v2021.1）xsim elaborate 覆盖率章节核实取值与拼写后再依赖其数据
-    #（评审指出该写法可能不被 2021.1 接受；ADR 0020 更正记录）。
-    set_property -name {xsim.elaborate.more_options} -value {-coverage all} -objects [get_filesets sim_1]
+    # 覆盖率开关（2026-10-16 实证修复，三轮实测收敛）：
+    #   ① `-coverage all` 是新版语法——xelab 2021.1 无 --coverage 选项（`xelab --help` 实测）；
+    #   ② 属性名 xsim.elaborate.more_options 在 2021.1 不存在（list_property 实测），
+    #     正确名为 xsim.elaborate.xelab.more_options；
+    #   ③ 专用属性 COVERAGE.TYPE 的取值是单词不是字母——合法值
+    #     "line branch condition 或 all"（USF-XSim-20 实测），字母式 "sbc" 被拒。
+    set_property -name {xsim.elaborate.coverage.type} -value {all} -objects [get_filesets sim_1]
 
     update_compile_order -fileset sim_1
 
     # 7. 启动仿真（行为仿真）
     launch_simulation
 
-    # 8. 运行并导出覆盖率（run_all 或按用例脚本）
-    # run_all
-    # exec /bin/sh -c "xcov ..." ;# 或在 GUI/Tcl 中 report_coverage
+    # 8. 仿真寿命由 TB 的 $finish 决定（runtime=all 见上）；覆盖率数据在
+    #    ./xsim.codecov（COVERAGE.TYPE=all），需要报表时用 xcrg 另行导出。
+    #    注意：run_all/close_sim 是 xsim 命令，不是 Vivado 工程 tcl 命令——
+    #    在 launch_simulation 之外调用会报 invalid command name（已实测）。
 } err]
 
 puts "INFO: Simulation launched for top=$TEST_TOP. RTL and verif are separate filelists."
