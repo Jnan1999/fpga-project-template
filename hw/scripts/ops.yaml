@@ -1,0 +1,66 @@
+# =============================================================================
+# ops.yaml —— 工具操作层：命名操作（op）契约清单
+#
+# 消费者：
+#   1) Agent / playbook / .claude/commands：只通过本文件的 op 名调用工具（铁律 5），
+#      不直接拼 vivado 命令
+#   2) scripts/check_gate.py（第二批）：gate 只接受 kind=verification 的输出作证据
+#   3) 未来 skill 封装：skill 是 op 之上的薄路由层，逻辑永远留在入口脚本
+#
+# 契约五要素（ADR 0017）：entry（入口+参数）/ kind / artifacts（产出）/
+#   summary（机读摘要段）/ exit_code（0=PASS，非 0=FAIL，fail-closed）
+#
+# 版本无关性：op 契约与 vendor/版本解耦；vendor 相关命令只是 entry 的当前实现。
+#   换工具/版本时只改 entry，上层引用不变。暂不为多版本建 adapters 目录（YAGNI）。
+# =============================================================================
+
+ops_version: "0.1.0"    # 契约结构版本，随字段演进递增
+
+ops:
+
+  create_impl_project:
+    kind: actuation                       # 执行类：创建/改变世界
+    description: 重建实现工程（源文件外置，只引用 rtl.f，不入库）
+    entry: "vivado -mode batch -source hw/scripts/create_impl_project.tcl"
+    args: []
+    artifacts:
+      project: "hw/impl_proj/"            # 脚本生成，git 忽略
+      log: "logs/impl_*.log"
+    summary: "日志末尾 === SUMMARY === 段（elaboration/methodology 关键计数）"
+    exit_code: "0=工程重建成功；非0=失败（含无法解析 filelist 等 fail-closed 情形）"
+
+  run_sim:
+    kind: actuation                       # 执行类：跑仿真（产生波形/日志）
+    description: 重建仿真工程并运行指定测试顶层
+    entry: "vivado -mode batch -source hw/verif/scripts/run_sim.tcl -tclargs <TEST_TOP>"
+    args:
+      - name: TEST_TOP
+        required: true
+        example: "tb_pulse_gen"
+    artifacts:
+      project: "hw/sim_proj/"             # 脚本生成，git 忽略
+      log: "logs/sim_<mod>_*.log"
+      waves: "hw/verif/waves/"
+    summary: "日志末尾 === SUMMARY === 段（PASS/FAIL + 用例计数 + 种子）"
+    exit_code: "0=仿真运行完成；非0=编译/解析失败（用例 PASS/FAIL 以 SUMMARY 段为准）"
+
+  # ---- verification 类（gate 证据来源；fail-closed + 自测，ADR 0013）----
+
+  check_ports:
+    kind: verification                    # 检查类：只读判定
+    description: core 与 dft_wrap 功能端口逐字比对（名/方向/位宽，dbg_ 前缀豁免）
+    entry: "python scripts/check_ports.py <core.v> <dft.v>"
+    args:
+      - name: core_v
+        required: true
+      - name: dft_v
+        required: true
+    artifacts:
+      log: "stdout（差异逐行输出）"
+    summary: "退出码即判据"
+    exit_code: "0=一致；非0=不一致或解析失败（fail-closed：无法识别的声明按失败处理）"
+    capability: "只证明端口名/方向/位宽一致；不能证明参数默认值相同、信号接对、功能正确（ADR 0010）"
+    selftest: "scripts/tests/（第二批落地：含故意不一致的反例）"
+
+  # 第二批登记：check_gate（verification）、new_module（actuation）
+  # 第四批登记：build_bitstream（actuation）、program_device（actuation）、read_timing（verification）

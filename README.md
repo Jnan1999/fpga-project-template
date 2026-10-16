@@ -13,6 +13,9 @@
 | `project.yaml` | 机器可读单一事实来源：项目信息（一区，用户填）+ 阶段状态/模块注册表/接口冻结表（二区，Agent 维护） |
 | `workflow/` | 七阶段操作规程（P0 需求 → P1 架构 → P2 模块设计[接口冻结] → P3 并行实现[RTL∥GoldenModel∥验证环境] → P4 功能验证 → P5 时序收敛 → P6 集成上板） |
 | `.claude/agents/` | 角色化 agent：rtl-engineer / golden-modeler / verification-lead |
+| `.claude/rules/` | 路径懒加载编码规范（rtl/tb/tcl），编辑对应文件时自动生效 |
+| `.claude/commands/` | 人触发流程命令：`/project:gate`、`/project:new-module`、`/project:module-check` |
+| `hw/scripts/ops.yaml` | 工具操作层契约：命名操作清单（铁律 5：只通过 op 调用工具） |
 | `docs/refs/` | 参考资料（datasheet/BOM），P0/P1 的 Agent 必读输入 |
 
 每个 gate 经用户确认后更新 `project.yaml` 阶段状态。初始化新项目时替换 `project.yaml` 的 `<...>` 占位符并填写一区。
@@ -21,8 +24,9 @@
 
 1. **源文件外置工程**：所有 RTL/约束/BD 保持在工程外部，工程（`.xpr`）由脚本重建，不入库、不勾选 *Copy sources into project*。
 2. **设计与验证分离**：可综合代码在 `hw/rtl/`，不可综合验证代码（TB/SV/断言）在 `hw/verif/`，通过 filelist 共享同一份 RTL。
-3. **每个模块三件套**：`<mod>.v`（功能核心）+ `<mod>_dft.v`（可测性包装，内部例化核心）+ `<mod>_wrap.v`（顶层统一入口，`ENABLE_DFT` 参数切换发布/调试）。top 永远只例化 `*_wrap`。
+3. **每个模块三件套**（默认模式，例外用 `dft_mode` 声明）：`<mod>.v`（功能核心）+ `<mod>_dft.v`（可测性包装，内部例化核心）+ `<mod>_wrap.v`（顶层统一入口，`ENABLE_DFT` 参数切换发布/调试）。top 永远只例化 `*_wrap`。
 4. **接口一致可执行**：core 与 dft 的功能端口必须一致，由 `scripts/check_ports.py` 在 CI 中强制校验，`dbg_` 前缀调试端口豁免。
+5. **工具操作走工具层**：只通过 `hw/scripts/ops.yaml` 声明的命名操作调用 vivado 等工具，不绕过拼装裸命令（保证机读 SUMMARY 与证据绑定不被旁路）。
 
 ## 2. 快速开始
 
@@ -70,7 +74,7 @@ fpga-project-template/
 ├── CLAUDE.md            # Agent 入口：铁律、路径速查、行为总纲
 ├── project.yaml         # 机器可读单一事实来源（项目信息/阶段/模块/接口冻结表）
 ├── workflow/            # 七阶段 Agent 操作规程（P0~P6 playbook）
-├── .claude/             # Agent 配置：角色定义（agents/）、权限示例（settings.example.json）
+├── .claude/             # Agent 配置：agents/ 角色、rules/ 路径懒加载规范、commands/ 流程命令、权限示例
 ├── docs/                # 所有设计文档，按开发阶段编号（唯一事实来源）
 │   ├── refs/            # 参考资料（datasheet/BOM，P0/P1 的 Agent 必读输入）
 │   ├── templates/       # 文档模板（LLD 完整版 + Agent 精简版）
@@ -100,7 +104,7 @@ fpga-project-template/
 │   ├── bd/              # Block Design 导出的 .tcl
 │   ├── constraints/     # XDC 约束
 │   ├── ip_repo/         # 自定义 IP 打包源
-│   └── scripts/create_impl_project.tcl
+│   └── scripts/         # create_impl_project.tcl + ops.yaml（工具操作契约清单）
 ├── sw/                  # PS 侧（Vitis 裸机/FreeRTOS）
 ├── host/                # 上位机（Python：命令下发、数据解析、Golden Model）
 ├── scripts/             # 跨 hw/sw/host 的顶层脚本（含 check_ports.py）

@@ -1,0 +1,16 @@
+{
+  "_comment": "示例配置：预批准本项目的只读检查与构建命令，减少重复授权提示。确认后重命名为 settings.json 生效（settings.json 可按项目需要裁剪；settings.json 与 settings.local.json 均不入库）。第二批 uv 落地后 python 调用将统一为 uv run python 形式，故两种形式的授权都已列入。",
+  "permissions": {
+    "allow": [
+      "Bash(python scripts/check_ports.py:*)",
+      "Bash(python scripts/check_gate.py:*)",
+      "Bash(python host/golden_model/*:*)",
+      "Bash(python host/scripts/*:*)",
+      "Bash(uv run python scripts/*:*)",
+      "Bash(uv run python host/*:*)",
+      "Bash(uv sync:*)",
+      "Bash(vivado -mode batch:*)",
+      "Bash(make:*)"
+    ]
+  }
+}

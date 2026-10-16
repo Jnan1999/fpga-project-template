@@ -8,33 +8,24 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 
 ## 开工前必读（按顺序）
 1. `project.yaml` —— 目标模块登记、interfaces 冻结表（`frozen: true` 的接口逐字遵守）
-2. `CLAUDE.md` —— 四条铁律
+2. `CLAUDE.md` —— 五条铁律
 3. 目标模块 LLD：`docs/02_module_design/<mod>/LLD_<mod>.md`
 4. 标准写法参考：`hw/rtl/pulse_gen/` 三件套
 
-## 官方优先原则（ADR 0002）
-- **能用官方 IP 不手搓**：FIFO Generator / AXI DMA / Clocking Wizard 等，用前读对应 PG 手册
-- **原语/推断模板照手册写**：涉及时钟（UG472）、SelectIO（UG471）、原语（UG953）时，照 UG901 推断模板或 UG953 例化，不写"祈祷综合器看懂"的写法
-- **引用必注明出处**：手册内容引用须写 UG 编号 + 章节 + 文档版本（对应 Vivado 2021.1）；禁止凭记忆编造端口/参数/时序数值
-- 手册地图：`docs/refs/xilinx/README.md`；amd-doc-search MCP 默认不启用（ADR 0007），未启用期间引用手册注明出处并标注"待核实"
+## 编码规范
+编辑 `hw/rtl/` 下文件时，`.claude/rules/rtl-style.md` 自动生效——三件套结构、可综合子集、官方优先原则、CDC、filelist 登记等**编码层规范以该文件为准**，此处不重复。
 
-## 硬性规范
-- **三件套结构**：
-  - core（`rtl/<mod>.v`）：纯功能，禁止 dbg_ 端口、禁止任何调试/观测代码
-  - dft_wrap（`dft_wrap/<mod>_dft.v`）：**内部例化 core**，功能端口逐字透传，观测/注入全走 `dbg_` 前缀调试总线
-  - wrap（`<mod>_wrap.v`）：`generate if(ENABLE_DFT)` 二选一；top 只例化 wrap，禁止直接例化 core/dft
-- core 与 dft 功能端口逐字一致（名/方向/位宽）——完工必跑 check_ports.py
-- 可综合子集：无 `initial` / `#delay` / `force`；异步复位低有效、同步释放（风格与 pulse_gen.v 一致）
-- 握手按 LLD 接口节：valid/ready 同拍传输，valid 置起后数据保持稳定；禁止裸 valid 无反压
-- 新增/删除文件必须同步登记 `hw/rtl/filelists/rtl.f`
-- 注释风格与 pulse_gen.v 一致：文件头块注释（功能/端口/关键设计）+ 端口行注释
+## 角色纪律（超出编码规范的部分）
+- **手册核实**：引用手册数值/端口/属性前必须查证官方手册（手册地图 `docs/refs/xilinx/README.md`）；无法查证时**明确告知用户需查哪本手册哪一节**，不得编造后标注"待核实"蒙混
+- **组合大于创造**：优先复用 `common/` 组件 + 官方 IP + 三件套模板，新造逻辑最小化；每块新逻辑立即向 verification 线交付可验证单元
+- 接口需要变更时：**停下来报告用户走变更流程**，不自行修改（即使只是位宽）
 
 ## 完工自验（向用户出示结果）
-1. `python scripts/check_ports.py hw/rtl/<mod>/rtl/<mod>.v hw/rtl/<mod>/dft_wrap/<mod>_dft.v` → 退出码 0
-2. elaboration 无 error、`report_methodology` 无 critical warning（见 P3 playbook 验证命令节）
+1. `/project:module-check <mod>`（底层 `scripts/check_ports.py`）→ 退出码 0
+2. elaboration 无 error、`report_methodology` 无 critical warning（见 P3 playbook 验证命令节；工具调用走 `hw/scripts/ops.yaml` 的 op，铁律 5）
 
 ## 禁止事项
 - 禁止改动 interfaces 表中 `frozen: true` 接口的任何属性（名/位宽/协议）
 - 禁止在 core 内写调试/观测逻辑（全部放 dft_wrap）
 - 禁止多 bit 信号裸跨时钟域（CDC 按 01-04 清单的同步方式，用 common/ 组件）
-- 接口需要变更时：停下来报告用户走变更流程，不自行修改
+- 禁止绕过 ops.yaml 直接拼 vivado 命令（铁律 5）

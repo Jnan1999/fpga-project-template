@@ -14,6 +14,7 @@
 3. **可测性三件套（默认模式，非无条件铁律）**：需观测/故障注入的业务模块 = `<mod>.v`（core）+ `<mod>_dft.v`（内部例化 core）+ `<mod>_wrap.v`（统一入口，`ENABLE_DFT` 切换）。top 只例化 `*_wrap`。
    **例外**：`common/` 的 CDC/同步器、简单组合逻辑、官方 IP/原语（布局与 CDC 识别敏感）**不强制**三件套；模块在 `project.yaml` 注册表用 `dft_mode` 声明模式（`three_piece`/`ip`/`primitive`/`none`）及理由（ADR 0014）。
 4. **端口一致性**：采用三件套的模块，core 与 dft 的功能端口逐字一致（名/方向/位宽），`dbg_` 前缀调试端口豁免；改动端口后必须跑 `scripts/check_ports.py`
+5. **工具操作走工具层**：禁止绕过 `hw/scripts/ops.yaml` 声明的命名操作直接拼 vivado/工具命令——否则机读 SUMMARY、证据绑定（git hash+工具版本+run ID）、版本采集全被旁路（ADR 0016/0017）
 
 ## Agent 行为总纲
 1. `project.yaml` 一区只读；二区状态更新须对应阶段 gate 经用户确认后才改
@@ -43,6 +44,9 @@
 | Golden Model | `host/golden_model/` |
 | 构建/仿真日志 | `logs/`（末尾 `=== SUMMARY ===` 段为机读摘要） |
 | 示例模块（标准写法参考） | `hw/rtl/pulse_gen/` |
+| 工具操作契约（ops） | `hw/scripts/ops.yaml`（命名操作清单：入口/kind/产出/SUMMARY/退出码） |
+| 路径懒加载规范 | `.claude/rules/`（rtl-style / tb-style / tcl-ops，编辑对应路径时自动生效） |
+| 人触发流程命令 | `.claude/commands/`（`/project:gate`、`/project:new-module`、`/project:module-check`） |
 
 ## 新增模块 checklist（按顺序执行）
 1. 复制 `hw/rtl/pulse_gen/` → `hw/rtl/<mod>/`，改文件名与模块名（core/dft/wrap 三件套）
@@ -55,9 +59,13 @@
 ## 常用命令（仓库根目录执行）
 | 目的 | 命令 |
 | --- | --- |
-| 端口一致性检查 | `python scripts/check_ports.py <core.v> <dft.v>` |
-| 建实现工程 | `vivado -mode batch -source hw/scripts/create_impl_project.tcl` |
-| 跑模块仿真 | `vivado -mode batch -source hw/verif/scripts/run_sim.tcl -tclargs tb_<mod>` |
+| 申请门禁推进 | `/project:gate` |
+| 新增模块 | `/project:new-module <mod>` |
+| 端口一致性检查 | `/project:module-check <mod>`（底层为 `python scripts/check_ports.py`） |
+| 建实现工程 | op `create_impl_project`：`vivado -mode batch -source hw/scripts/create_impl_project.tcl` |
+| 跑模块仿真 | op `run_sim`：`vivado -mode batch -source hw/verif/scripts/run_sim.tcl -tclargs tb_<mod>` |
+
+> 直接执行底层命令须遵守铁律 5（只调用 `ops.yaml` 已登记的 op，不自行拼装新命令组合）。
 
 ## 阶段操作规程（workflow/）
 | 阶段 | playbook | 出口 Gate |
