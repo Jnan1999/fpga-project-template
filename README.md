@@ -50,7 +50,7 @@ cp -r fpga-project-template my_project && cd my_project
 模板自带一个完整可参考的示例模块（脉冲发生器），包含 core/dft/wrap 三件套与端口门禁：
 ```bash
 # 端口一致性检查（CI 门禁）
-python scripts/check_ports.py \
+uv run python scripts/check_ports.py \
   hw/rtl/pulse_gen/rtl/pulse_gen.v \
   hw/rtl/pulse_gen/dft_wrap/pulse_gen_dft.v
 

@@ -28,7 +28,7 @@
 ## 4. 验证命令
 | 命令 | 机读判据 |
 | --- | --- |
-| `python host/scripts/<比对脚本>.py --raw <原始> --board <板载> --gm <期望>` | 逐点差异在 LLD 规定的量化误差内 |
+| `uv run python host/scripts/<比对脚本>.py --raw <原始> --board <板载> --gm <期望>` | 逐点差异在 LLD 规定的量化误差内 |
 | 板级用例逐项（05-02） | 全部通过，结果回填 05-04 |
 
 ## 5. 出口标准（G4 release review）

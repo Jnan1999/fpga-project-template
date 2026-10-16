@@ -115,8 +115,24 @@ def main():
         print(__doc__)
         sys.exit(2)
     results = []
+    errors = 0
     for i in range(0, len(args), 2):
-        results.append(compare(args[i], args[i + 1]))
+        try:
+            results.append(compare(args[i], args[i + 1]))
+        except ValueError as e:
+            # fail-closed：解析失败计入失败，不中断其余对的检查
+            print(f"[FAIL] 解析失败：{e}")
+            results.append(False)
+            errors += 1
+    passed = sum(1 for r in results if r)
+    print()
+    print("=== SUMMARY ===")
+    print(f"RESULT: {'PASS' if all(results) else 'FAIL'}")
+    print(f"PAIRS_CHECKED: {len(results)}")
+    print(f"PAIRS_PASSED: {passed}")
+    print(f"PAIRS_FAILED: {len(results) - passed}")
+    print(f"PARSE_ERRORS: {errors}")
+    print("===============")
     sys.exit(0 if all(results) else 1)
 
 

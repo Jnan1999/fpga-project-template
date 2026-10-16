@@ -17,9 +17,11 @@
 # =============================================================================
 
 # --- 通用组件（复位同步、CDC、异步 FIFO 等）---
-hw/rtl/common/sync_reset.v
-hw/rtl/common/cdc_2ff_sync.v
-hw/rtl/common/async_fifo.v
+# 注意：以下三个组件属于规划中的可信积木库，模板暂未附带源文件。
+# 取消注释前必须先落盘对应文件，否则建工程/elaboration 会因文件缺失失败（fail-closed）。
+# hw/rtl/common/sync_reset.v
+# hw/rtl/common/cdc_2ff_sync.v
+# hw/rtl/common/async_fifo.v
 
 # --- 示例模块：pulse_gen（core/dft/wrap 三件套，新建模块时照此模板复制）---
 #   功能核心（唯一可信源）/ 可测性包装（内部例化核心）/ 顶层统一入口（ENABLE_DFT 二选一）

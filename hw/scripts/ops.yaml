@@ -17,7 +17,7 @@
 #   exit_code   统一口径：0=PASS，非0=FAIL（fail-closed）
 # =============================================================================
 
-ops_version: "0.3.0"    # 0.3：ADR 0020——SUMMARY 降为反馈格式、退出码统一 0=PASS、证据 run_id 绑定
+ops_version: "0.4.0"    # 0.4：二批落地——SUMMARY 段写入三个 tcl、check_elab/check_gate 登记、uv 入口统一
 
 ops:
 
@@ -28,11 +28,11 @@ ops:
     long_running: false
     artifacts:
       project: "hw/impl_proj/"            # 脚本生成，git 忽略
-      log: "logs/impl_*.log"
-    result_glob: "logs/impl_*.log"
+      log: "logs/create_proj_<run_id>.log"
+    result_glob: "logs/create_proj_*.log"
     summary:
       marker: "=== SUMMARY ==="
-      fields: [RESULT, ELAB_ERRORS, METHODOLOGY_CRITICAL]
+      fields: [RESULT, RUN_ID, GIT_HASH, TOOL_VERSION, PART, RTL_FILES]
     exit_code: "0=重建成功；非0=失败（含 filelist 解析失败等 fail-closed 情形）"
 
   run_sim:
@@ -44,12 +44,12 @@ ops:
       - { name: TEST_TOP, required: true, example: "tb_pulse_gen" }
     artifacts:
       project: "hw/sim_proj/"
-      log: "logs/sim_<mod>_*.log"
+      log: "logs/sim_<run_id>_<tb>.log"
       waves: "hw/verif/waves/"
     result_glob: "logs/sim_*_*.log"        # 仅供浏览；并行/不同种子会串用，证据须 run_id 绑定具体路径
     summary:
       marker: "=== SUMMARY ==="
-      fields: [RESULT, RUN_ID, TESTCASES_PASSED, TESTCASES_FAILED, SEED]
+      fields: [RESULT, RUN_ID, GIT_HASH, TOOL_VERSION, TEST_TOP, SIM_ERRORS]
     exit_code: "0=仿真运行完成且用例全过（RESULT: PASS）；非0=编译失败或有 FAIL（统一 0=PASS 口径；执行成功与验证通过在 SUMMARY 分字段表达，不靠退出码混用）"
 
   # ---- verification 类（gate 证据来源；fail-closed + 自测，ADR 0013）----
@@ -57,7 +57,7 @@ ops:
   check_ports:
     kind: verification
     description: core 与 dft_wrap 功能端口逐字比对（名/方向/位宽，dbg_ 前缀豁免）
-    entry: "python scripts/check_ports.py <core.v> <dft.v>"
+    entry: "uv run python scripts/check_ports.py <core.v> <dft.v>"
     long_running: false
     args:
       - { name: core_v, required: true }
@@ -66,13 +66,44 @@ ops:
       log: "stdout（差异逐行输出 + 末尾 SUMMARY 段）"
     summary:
       marker: "=== SUMMARY ==="
-      fields: [RESULT, PAIRS_CHECKED, PAIRS_PASSED, PAIRS_FAILED]
-    exit_code: "0=一致（PASS）；非0=不一致或解析失败（fail-closed，统一 0=PASS 口径）"
+      fields: [RESULT, PAIRS_CHECKED, PAIRS_PASSED, PAIRS_FAILED, PARSE_ERRORS]
+    exit_code: "0=一致；1=不一致或解析失败（fail-closed）；2=参数错误"
     capability: "只证明端口名/方向/位宽一致；不能证明参数默认值、信号连接、功能正确（ADR 0010）"
-    selftest: "scripts/tests/（第二批落地：含故意不一致的反例）"
+    selftest: "uv run python scripts/tests/run_tests.py（含故意不一致的反例，已落地）"
+
+  check_elab:
+    kind: verification
+    description: 非工程模式 RTL elaboration + report_methodology（G3 证据来源）
+    entry: "vivado -mode batch -source hw/scripts/check_elab.tcl"
+    long_running: false                   # 分钟级；大设计可转后台
+    artifacts:
+      log: "logs/elab_<run_id>.log"
+      report: "logs/elab_<run_id>.methodology.rpt"
+    result_glob: "logs/elab_*.log"
+    summary:
+      marker: "=== SUMMARY ==="
+      fields: [RESULT, RUN_ID, GIT_HASH, TOOL_VERSION, PART, TOP, ERRORS, METHODOLOGY_CRITICAL]
+    exit_code: "0=elaboration 无 error 且 methodology 无 critical；非0=否则"
+    capability: "只证明设计可展开、无 methodology 红线；不能证明功能正确、时序收敛（ADR 0010）"
+
+  check_gate:
+    kind: verification
+    description: 阶段门禁契约检查（数据源 workflow/gates.yaml；三模式 status/entry/exit；--slow 会真正调用 Vivado 重跑慢检查）
+    entry: "uv run python scripts/check_gate.py <status|entry|exit> [阶段或gate名] [--slow]"
+    long_running: false                   # --slow 时为长任务（会起 Vivado）
+    args:
+      - { name: mode, required: true, example: "exit" }
+      - { name: target, required: false, example: "P3 或 G3" }
+    artifacts:
+      log: "stdout（逐项 PASS/FAIL/UNKNOWN + 末尾 SUMMARY 段）"
+    summary:
+      marker: "=== SUMMARY ==="
+      fields: [RESULT, CHECKS_TOTAL, CHECKS_PASS, CHECKS_FAIL, CHECKS_UNKNOWN]
+    exit_code: "0=PASS；1=FAIL；2=UNKNOWN（证据缺失/慢检查未跑/剩人工项/用法错误）"
+    capability: "只证明 gates.yaml 契约项被满足；不能证明契约本身正确、不能代替人工 gate 评审（workflow/README 信任模型）"
+    note: "gates.yaml 是验收标准（与验证计划同级）：改动须经用户评审，agent 不得自改"
 
   # 后续批次登记（按需，不预设封装）：
-  #   check_gate（verification，二批）
   #   build_bitstream / program_device（actuation，四批）
   #   read_timing（verification，四批）
   # skill 候选（非 op，第三批起单独评估）：时序收敛分析、CDC 审查、仿真失败归因、覆盖率收敛、寄存器表生成

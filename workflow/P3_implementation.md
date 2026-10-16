@@ -34,9 +34,9 @@
 ## 4. 验证命令（三线各自完工必跑，向用户出示结果）
 | 线 | 命令 | 机读判据 |
 | --- | --- | --- |
-| A | `python scripts/check_ports.py hw/rtl/<mod>/rtl/<mod>.v hw/rtl/<mod>/dft_wrap/<mod>_dft.v` | 退出码 0（每模块） |
-| A | `vivado -mode batch -source hw/scripts/create_impl_project.tcl` 后 elaboration | 无 error；`report_methodology` 无 critical warning |
-| B | `python host/golden_model/<mod>.py --selftest` | 输出 PASS |
+| A | `uv run python scripts/check_ports.py hw/rtl/<mod>/rtl/<mod>.v hw/rtl/<mod>/dft_wrap/<mod>_dft.v` | 退出码 0（每模块） |
+| A | `vivado -mode batch -source hw/scripts/check_elab.tcl`（G3 证据 op，第二批落地） | 退出码 0：SUMMARY 中 ERRORS=0 且 METHODOLOGY_CRITICAL=0 |
+| B | `uv run python host/golden_model/<mod>.py --selftest` | 输出 PASS |
 | C | `vivado -mode batch -source hw/verif/scripts/run_sim.tcl -tclargs tb_<mod>`（冒烟用例） | 编译/elaborate 通过，冒烟用例可运行 |
 
 ## 5. 出口标准（G3 pre-commitment review）

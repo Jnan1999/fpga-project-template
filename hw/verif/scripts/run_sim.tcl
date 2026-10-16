@@ -10,7 +10,13 @@
 #
 # 若使用 Questa/ModelSim/VCS 等第三方仿真器，则不用本脚本，直接用命令行：
 #   vlog -f hw/verif/filelists/verif.f   （VCS 用 vlogan，按工具语法调整）
+#
+# 结构（ADR 0020 两段分离）：
+#   【驱动段】建工程/启仿真 —— agent 可自由改造（方法自由）
+#   【汇总判读段】末尾 SUMMARY 的生成与 PASS 口径 —— 属验收口径，改动需用户审核
 # =============================================================================
+
+# ======================= 驱动段（agent 可自由改造） =======================
 
 # ---- 1. 读取 filelist（支持 # 注释、行尾 # 注释与 -f 嵌套）----
 #   skip_includes=1 时跳过所有 -f 行（用于 sim_1：设计源已在 sources_1 单独加入，
@@ -43,35 +49,96 @@ set PROJ_NAME  "sim_proj"
 set TEST_TOP   [lindex $argv 0]
 if {$TEST_TOP eq ""} { set TEST_TOP "tb_system_top" }
 
-# ---- 3. 创建独立仿真工程 ----
-create_project $PROJ_NAME $PROJ_DIR -part $PART -force
-set_property target_language Verilog [current_project]
-set_property simulator_language Mixed [current_project]
+set RUN_ID "[clock format [clock seconds] -format "%Y%m%d_%H%M%S"]_${TEST_TOP}"
 
-# ---- 4. 设计源 → sources_1（只读引用，不复制；全工程只加这一次）----
-add_files [read_filelist "hw/rtl/filelists/rtl.f"]
+# ---- 3~7. 仿真主流程（catch 包裹：失败也要落 SUMMARY，fail-closed）----
+set rc [catch {
+    # 3. 创建独立仿真工程
+    create_project $PROJ_NAME $PROJ_DIR -part $PART -force
+    set_property target_language Verilog [current_project]
+    set_property simulator_language Mixed [current_project]
 
-# ---- 5. 验证代码 → sim_1（interface/env/tb/断言，不可综合）----
-# 关键：skip_includes=1，跳过 verif.f 顶部的 -f rtl.f，
-# 设计源只在 sources_1 出现一次，sim_1 只放验证文件，不重复。
-# Vivado 仿真时自动编译 sources_1（设计）+ sim_1（TB）。
-add_files -fileset sim_1 [read_filelist "hw/verif/filelists/verif.f" 1]
+    # 4. 设计源 → sources_1（只读引用，不复制；全工程只加这一次）
+    add_files [read_filelist "hw/rtl/filelists/rtl.f"]
 
-# ---- 6. 设置仿真顶层、编译选项（覆盖率、断言）----
-set_property top $TEST_TOP [get_filesets sim_1]
-set_property top_lib xil_defaultlib [get_filesets sim_1]
-set_property -name {xsim.simulate.runtime} -value {0} -objects [get_filesets sim_1]
-set_property -name {xsim.elaborate.debug_level} -value {all} -objects [get_filesets sim_1]
-# 覆盖率（xsim 用 cc 开关，按版本调整）
-set_property -name {xsim.elaborate.more_options} -value {-coverage all} -objects [get_filesets sim_1]
+    # 5. 验证代码 → sim_1（interface/env/tb/断言，不可综合）
+    # 关键：skip_includes=1，跳过 verif.f 顶部的 -f rtl.f，
+    # 设计源只在 sources_1 出现一次，sim_1 只放验证文件，不重复。
+    add_files -fileset sim_1 [read_filelist "hw/verif/filelists/verif.f" 1]
 
-update_compile_order -fileset sim_1
+    # 6. 设置仿真顶层、编译选项（覆盖率、断言）
+    set_property top $TEST_TOP [get_filesets sim_1]
+    set_property top_lib xil_defaultlib [get_filesets sim_1]
+    set_property -name {xsim.simulate.runtime} -value {0} -objects [get_filesets sim_1]
+    set_property -name {xsim.elaborate.debug_level} -value {all} -objects [get_filesets sim_1]
+    # 覆盖率开关。【待核实】：`-coverage all` 语法继承自模板初版，须对照
+    # UG900（v2021.1）xsim elaborate 覆盖率章节核实取值与拼写后再依赖其数据
+    #（评审指出该写法可能不被 2021.1 接受；ADR 0020 更正记录）。
+    set_property -name {xsim.elaborate.more_options} -value {-coverage all} -objects [get_filesets sim_1]
 
-# ---- 7. 启动仿真（行为仿真）----
-launch_simulation
+    update_compile_order -fileset sim_1
 
-# ---- 8. 运行并导出覆盖率（run_all 或按用例脚本）----
-# run_all
-# exec /bin/sh -c "xcov ..." ;# 或在 GUI/Tcl 中 report_coverage
+    # 7. 启动仿真（行为仿真）
+    launch_simulation
+
+    # 8. 运行并导出覆盖率（run_all 或按用例脚本）
+    # run_all
+    # exec /bin/sh -c "xcov ..." ;# 或在 GUI/Tcl 中 report_coverage
+} err]
 
 puts "INFO: Simulation launched for top=$TEST_TOP. RTL and verif are separate filelists."
+
+# ================= 汇总判读段（验收口径，改动需用户审核） =================
+# PASS 口径（与 ops.yaml run_sim 的退出码口径一致："仿真运行完成且用例全过"）：
+#   rc==0（脚本与仿真器无 Tcl/启动错误）且仿真日志中无 Error/Fatal/FAIL 计数。
+# 注意：本段只判定"哪些结果被算进 PASS"；"测什么、怎么判对错"属验证计划（hw/verif/），
+# TB 必须自检（scoreboard/断言），本段的关键字扫描是最后一道兜底，不能替代 TB 自检。
+
+proc tool_version {} {
+    if {[catch {version} v]} { return "unknown" }
+    return [string trim [lindex [split $v "\n"] 0]]
+}
+proc git_hash {} {
+    if {[catch {exec git rev-parse --short HEAD} h]} { return "unknown" }
+    return [string trim $h]
+}
+
+# 扫描 xsim 日志的错误计数（判读口径的一部分）
+set sim_errors -1   ;# -1 = 日志缺失（结果未知 → fail-closed 判 FAIL）
+foreach cand [list \
+    "$PROJ_DIR/$PROJ_NAME.sim/sim_1/behav/xsim/xsim.log" \
+    "$PROJ_DIR/$PROJ_NAME.sim/sim_1/behav/xsim/simulate.log"] {
+    if {[file exists $cand]} {
+        set sim_errors 0
+        set lf [open $cand r]
+        while {[gets $lf line] >= 0} {
+            if {[regexp {(^|[^a-zA-Z])(Error|Fatal|FATAL|FAIL)[: ]} $line]} { incr sim_errors }
+        }
+        close $lf
+        break
+    }
+}
+
+set passed [expr {$rc == 0 && $sim_errors == 0}]
+
+file mkdir "logs"
+set log_file "logs/sim_${RUN_ID}.log"
+set fh [open $log_file w]
+puts $fh "=== SUMMARY ==="
+puts $fh "RESULT: [expr {$passed ? "PASS" : "FAIL"}]"
+puts $fh "RUN_ID: $RUN_ID"
+puts $fh "GIT_HASH: [git_hash]"
+puts $fh "TOOL_VERSION: [tool_version]"
+puts $fh "TEST_TOP: $TEST_TOP"
+puts $fh "SIM_ERRORS: $sim_errors"
+if {$rc != 0} { puts $fh "ERROR: $err" }
+puts $fh "==============="
+close $fh
+puts "INFO: SUMMARY written to $log_file (RESULT=[expr {$passed ? "PASS" : "FAIL"}])"
+
+# 退出码统一口径（ADR 0013 / ops.yaml）：0=仿真运行完成且用例全过，非 0=否则
+if {!$passed} {
+    if {$rc != 0} { puts "ERROR: $err" }
+    exit 1
+}
+exit 0

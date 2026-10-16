@@ -25,7 +25,7 @@ P0 需求捕获 ─G1→ P1 系统架构 ─G2→ P2 模块设计 ─接口冻�
 ## 状态更新规则
 1. Agent 完成某阶段全部任务 + 验证命令全绿 → 向用户出示结果，申请 gate 评审
 2. 用户确认通过 → 更新 `project.yaml`：该阶段 `status: done`，下一阶段 `status: in_progress`，`current_phase` 前进
-3. **Gate 未通过时禁止推进**；第二批的 `scripts/check_gate.py` 将对此机械强制
+3. **Gate 未通过时禁止推进**；`scripts/check_gate.py`（第二批已落地，契约见 `workflow/gates.yaml`）提供机读核对：`status` 总览 / `entry <P*>` 入口 / `exit <P*>` 出口，`--slow` 会真正调用 Vivado 重跑慢检查。注意它只证明"契约项被满足"，gate 盖章权永远在用户
 
 ## 失效传播矩阵（评审#3 / ADR 0012）—— 上游变了，哪些已完成结果必须作废
 

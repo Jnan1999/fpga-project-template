@@ -19,6 +19,8 @@
 | 无法识别的声明（宏/复杂类型） | 反例 | 报错退出（fail-closed，不放行） |
 | dbg_ 前缀端口豁免 | 正例 | 退出 0 |
 
-## 实现归属
-测试代码与运行器在**第二批工具批**实现（本批只建目录与约定）。
-运行方式建议：`uv run python -m pytest scripts/tests/`，纳入 CI。
+## 实现与运行（第二批已实现）
+- 用例 fixtures：`cases/*.v`（正例 + 反例）
+- 零依赖运行器：`run_tests.py`（只用标准库 subprocess，不需要 pytest）
+- 运行：`uv run python scripts/tests/run_tests.py` → 退出 0 = 全部符合预期；输出末尾 `=== SUMMARY ===` 机读段
+- 纳入 CI：该命令可作为 CI 的一步直接调用

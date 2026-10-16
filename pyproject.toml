@@ -1,0 +1,11 @@
+[project]
+name = "fpga-project-template"
+version = "0.1.0"
+description = "Agent 驱动的 FPGA 项目模板（Zynq-7000 / Vivado）：契约检查与脚本工具链"
+requires-python = ">=3.12"
+dependencies = [
+    "pyyaml>=6.0",    # check_gate.py 解析 project.yaml / gates.yaml / contracts/interfaces.yaml
+]
+
+[tool.uv]
+package = false    # 本仓库是脚本集合，不作为可安装包

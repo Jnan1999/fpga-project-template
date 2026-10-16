@@ -20,7 +20,7 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 - 纯 Python 标准库优先；确需第三方库（numpy 等）时登记 `host/requirements.txt`
 
 ## 完工自验（向用户出示结果）
-1. `python host/golden_model/<mod>.py --selftest` → PASS
+1. `uv run python host/golden_model/<mod>.py --selftest` → PASS
 2. 出示一组示例输入 → 输出，供用户核对算法行为
 
 ## 禁止事项

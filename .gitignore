@@ -7,6 +7,7 @@ hw/sim_proj/*
 !hw/sim_proj/README.md
 *.jou
 *.log
+*.rpt
 *.bak
 *.str
 *.dbg

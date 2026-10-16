@@ -53,7 +53,7 @@
 1. 复制 `hw/rtl/pulse_gen/` → `hw/rtl/<mod>/`，改文件名与模块名（core/dft/wrap 三件套）
 2. `hw/rtl/filelists/rtl.f` 追加三行
 3. 建 `hw/verif/tb/<mod>/` 并写 TB；`hw/verif/filelists/verif.f` 追加
-4. 验证：`python scripts/check_ports.py hw/rtl/<mod>/rtl/<mod>.v hw/rtl/<mod>/dft_wrap/<mod>_dft.v` → 退出码 0
+4. 验证：`uv run python scripts/check_ports.py hw/rtl/<mod>/rtl/<mod>.v hw/rtl/<mod>/dft_wrap/<mod>_dft.v` → 退出码 0
 5. 写 LLD：先填 `docs/templates/_模板_LLD_agent精简版.md` → 用户审核 → 补完整版
 6. 在 `project.yaml` 的 `modules:` 登记（status: design）
 
@@ -75,8 +75,10 @@
 | --- | --- |
 | 申请门禁推进 | `/project:gate` |
 | 新增模块 | `/project:new-module <mod>` |
-| 端口一致性检查 | `/project:module-check <mod>`（底层为 `python scripts/check_ports.py`） |
+| 端口一致性检查 | `/project:module-check <mod>`（底层为 `uv run python scripts/check_ports.py`） |
+| 阶段门禁检查 | `uv run python scripts/check_gate.py status/entry/exit [目标] [--slow]`（契约：`workflow/gates.yaml`） |
 | 建实现工程 | `vivado -mode batch -source hw/scripts/create_impl_project.tcl` |
+| elaboration 检查（G3 证据） | `vivado -mode batch -source hw/scripts/check_elab.tcl` |
 | 跑模块仿真 | `vivado -mode batch -source hw/verif/scripts/run_sim.tcl -tclargs tb_<mod>` |
 
 > 后两条是 `ops.yaml` 中的示例入口；agent 可按需调整参数或脚本，只要遵守机读契约（末尾 SUMMARY 段）。

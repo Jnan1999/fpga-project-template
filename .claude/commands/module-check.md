@@ -6,7 +6,7 @@ argument-hint: "<模块名>"
 对模块 `$ARGUMENTS` 执行端口一致性检查（信任模型的 verification 类检查，ADR 0010）：
 
 ```bash
-python scripts/check_ports.py hw/rtl/$ARGUMENTS/rtl/$ARGUMENTS.v hw/rtl/$ARGUMENTS/dft_wrap/${ARGUMENTS}_dft.v
+uv run python scripts/check_ports.py hw/rtl/$ARGUMENTS/rtl/$ARGUMENTS.v hw/rtl/$ARGUMENTS/dft_wrap/${ARGUMENTS}_dft.v
 ```
 
 > 说明：`$ARGUMENTS` 是 Claude Code 命令的参数占位符（官方语法）；上面 Bash 代码块里若出现 `$ARGUMENTS`/`${ARGUMENTS}` 未被替换的形式，请先替换为实际模块名再执行——占位符不会被 shell 当作命令参数。

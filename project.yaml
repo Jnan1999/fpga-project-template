@@ -22,7 +22,7 @@ project:
   tool_version:
     vivado: "2021.1"
     vitis: "2021.1"
-    python: "3.8"
+    python: "3.12"                  # 由 uv 锁定（.python-version + uv.lock）
 
 # ========== 二区：流程状态（Agent 维护，gate 更新需用户确认）==========
 
