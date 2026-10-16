@@ -32,9 +32,26 @@
 
 模板改动：`workflow/P0_requirements.md`（§1a 新增 + §3.2 阶段语义 + §4 措辞更新）。
 
+## 2b. 同日补充（用户第二轮反馈）
+
+1. **MCP 二进制部署完成**：用户手动下载 `vivado-mcp-server-windows-amd64-2026.9.1.exe`，
+   已复制到 `C:\Users\Administrator\tools\vivado-mcp-server\` 并通过 stdio 探针验证
+   （initialize + tools/list：server 2026.9.1，11 个工具）。首次探针超时原因：共享 HTTP
+   守护进程冷启动 >60s，二次即过（--stdio-bridge 架构：stdio 中继到常驻 daemon，
+   所以会话能跨客户端存活——这正是"常驻 Vivado 会话"的实现方式）。
+2. **P0 交互流程模板**（`docs/templates/_示例_P0交互流程.md`）：按用户要求自行设计，
+   不拘泥其示例。四个机制：每轮状态头（阶段/清单计数/资料状态，防上下文丢失的对话内锚点）、
+   提问格式（问题+建议答案+依据+三选一）、阶段推进循环（**agent 主动询问**"是否进入下一阶段"，
+   用户只做选择；修改完成后必须重新主动询问，沉默≠同意）、状态持久化五机制表
+   （回答用户"多轮对话会不会丢阶段信息"的疑问：状态在 project.yaml 与清单文件里，
+   不在对话里；用户无需盯守，只需在回答问题与 gate 确认两类时刻出手）。
+3. **手册优先原则**（用户明确要求）：P0 建议答案的依据优先级 = 用户上传手册 > 联网检索
+   （须同意+落盘+标注来源）> 通用经验（标"待手册核实"）。已写入 P0 playbook §3.1 与模板 §2。
+4. FBG_32CH/VIVADO_MCP_SETUP.md 标记步骤 1-3 完成；FBG 会话由用户手动开启。
+
 ## 3. FBG_32CH 项目目录状态
 
 - `E:\Zynq7020\FBG_32CH` = 模板 e1ba24d+ 克隆，uv 已 sync，`scripts/tests` 自测绿，
   `check_gate.py status` 行为正确（全 UNKNOWN，fail-closed）。
-- `.mcp.json`（项目级 vivado-mcp，预配路径）+ `VIVADO_MCP_SETUP.md`（下载/注册/验证步骤）。
-- **待用户**：下载 MCP 二进制（AMD 账号）→ 放约定路径 → 新会话批准 vivado-mcp → 冒烟对比。
+- `.mcp.json`（项目级 vivado-mcp，预配路径）+ `VIVADO_MCP_SETUP.md`（下载/注册/验证步骤，步骤 1-3 已完成 ✅）。
+- **待用户**：在 FBG_32CH 目录开新会话 → 批准 vivado-mcp → 按 VIVADO_MCP_SETUP.md §5 冒烟对比（batch vs MCP 常驻会话）。
