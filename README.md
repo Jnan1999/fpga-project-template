@@ -15,7 +15,7 @@
 | `.claude/agents/` | 角色化 agent：rtl-engineer / golden-modeler / verification-lead |
 | `.claude/rules/` | 路径懒加载编码规范（rtl/tb/tcl），编辑对应文件时自动生效 |
 | `.claude/commands/` | 人触发流程命令：`/project:gate`、`/project:new-module`、`/project:module-check` |
-| `hw/scripts/ops.yaml` | 工具操作层契约：命名操作清单（铁律 5：只通过 op 调用工具） |
+| `hw/scripts/ops.yaml` | 工具操作参考清单（非强制）：常用操作的示例入口 + 结果判读 + 机读契约 |
 | `docs/refs/` | 参考资料（datasheet/BOM），P0/P1 的 Agent 必读输入 |
 
 每个 gate 经用户确认后更新 `project.yaml` 阶段状态。初始化新项目时替换 `project.yaml` 的 `<...>` 占位符并填写一区。
@@ -26,7 +26,8 @@
 2. **设计与验证分离**：可综合代码在 `hw/rtl/`，不可综合验证代码（TB/SV/断言）在 `hw/verif/`，通过 filelist 共享同一份 RTL。
 3. **每个模块三件套**（默认模式，例外用 `dft_mode` 声明）：`<mod>.v`（功能核心）+ `<mod>_dft.v`（可测性包装，内部例化核心）+ `<mod>_wrap.v`（顶层统一入口，`ENABLE_DFT` 参数切换发布/调试）。top 永远只例化 `*_wrap`。
 4. **接口一致可执行**：core 与 dft 的功能端口必须一致，由 `scripts/check_ports.py` 在 CI 中强制校验，`dbg_` 前缀调试端口豁免。
-5. **工具操作走工具层**：只通过 `hw/scripts/ops.yaml` 声明的命名操作调用 vivado 等工具，不绕过拼装裸命令（保证机读 SUMMARY 与证据绑定不被旁路）。
+
+> 工具操作（建工程/仿真/综合）不是铁律——`hw/scripts/ops.yaml` 是给 agent 的参考清单，agent 可自由改造脚本；唯一硬要求是脚本日志末尾输出 `=== SUMMARY ===` 机读段（ADR 0019）。
 
 ## 2. 快速开始
 

@@ -23,7 +23,7 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 - 缺陷记录写入 `docs/05_bringup/05-03_调试记录.md`：现象 / 最小复现（种子+激励）/ 根因 / 修复 / 回归结果
 - **覆盖率收敛**：行 ≥95% / 分支 ≥90% / 功能 100%；未覆盖项逐条分类（补用例，或证明冗余申请用户豁免）
 - 回填：测试矩阵状态列、RTM 验证状态列、`03-03_覆盖率与回归报告.md`
-- 跑仿真走 `hw/scripts/ops.yaml` 的 `run_sim` op（铁律 5）
+- 跑仿真的脚本写法与结果判读参考 `hw/scripts/ops.yaml`（run_sim），末尾认 `=== SUMMARY ===` 段
 
 ## 禁止事项
 - 禁止为让用例通过而改 Golden Model 迁就 RTL（GM 任何修改必须用户确认）

@@ -22,10 +22,9 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 
 ## 完工自验（向用户出示结果）
 1. `/project:module-check <mod>`（底层 `scripts/check_ports.py`）→ 退出码 0
-2. elaboration 无 error、`report_methodology` 无 critical warning（见 P3 playbook 验证命令节；工具调用走 `hw/scripts/ops.yaml` 的 op，铁律 5）
+2. elaboration 无 error、`report_methodology` 无 critical warning（见 P3 playbook 验证命令节；工具脚本写法与判读参考 `hw/scripts/ops.yaml`）
 
 ## 禁止事项
 - 禁止改动 interfaces 表中 `frozen: true` 接口的任何属性（名/位宽/协议）
 - 禁止在 core 内写调试/观测逻辑（全部放 dft_wrap）
 - 禁止多 bit 信号裸跨时钟域（CDC 按 01-04 清单的同步方式，用 common/ 组件）
-- 禁止绕过 ops.yaml 直接拼 vivado 命令（铁律 5）
